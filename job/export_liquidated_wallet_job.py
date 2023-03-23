@@ -49,7 +49,7 @@ class ExportLiquidatedWalletJob(CLIJob):
                         event[Amount.token[key]], event["block_timestamp"])
             liquidator = {
                 "_id": event["wallet"],
-                "buyers": {
+                "debtors": {
                     event["user"]: {
                         str(event["block_timestamp"]): {
                             "protocol": event["contract_address"],
@@ -64,7 +64,7 @@ class ExportLiquidatedWalletJob(CLIJob):
             }
             debtor = {
                 "_id": event["user"],
-                "debtors": {
+                "buyers": {
                     event["wallet"]: {
                         str(event["block_timestamp"]): {
                             "protocol": event["contract_address"],
