@@ -1,7 +1,20 @@
+import logging
 import os
+from logging.handlers import RotatingFileHandler
+
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+class TokenMongoDBConfig:
+    MONGODB_HOST = os.environ.get("TOKEN_MONGO_HOST", '0.0.0.0')
+    MONGODB_PORT = os.environ.get("TOKEN_MONGO_PORT", '8529')
+    HOST = f"http://{MONGODB_HOST}:{MONGODB_PORT}"
+    USERNAME = os.environ.get("TOKEN_MONGO_USERNAME", "root")
+    PASSWORD = os.environ.get("TOKEN_MONGO_PASSWORD", "dev123")
+    CONNECTION_URL = os.environ.get(
+        "TOKEN_MONGO_CONNECTION_URL") or f'mongodb://{USERNAME}:{PASSWORD}@{MONGODB_HOST}:{MONGODB_PORT}'
 
 
 class MongoConfig:
@@ -20,3 +33,63 @@ class ArangoDBConfig:
     PASSWORD = os.getenv("ARANGODB_PASSWORD", "123")
     DATABASE = os.getenv("ARANGODB_DATABASE", "klg_database")
     CONNECTION_URL = os.getenv("ARANGODB_CONNECTION_URL") or f"http://{ARANGODB_HOST}:{ARANGODB_PORT}"
+    # KLG_DATABASE = "klg_database"
+    KLG_DATABASE = 'knowledge_graph'
+    TOKEN_DATABASE = "TokenDatabase"
+    KLG = "knowledge_graph"
+    TOKEN_GRAPH = "token_graph"
+    WALLETS = 'wallets'
+    MULTICHAIN_WALLETS = 'multichain_wallets'
+    WALLET_SCORES = 'wallets_credit_scores'
+    MULTICHAIN_WALLET_SCORES = 'multichain_wallets_credit_scores'
+    MERGED_WALLET_SCORES = 'merged_wallets_credit_scores'
+    POOLS = 'pools'
+    TOKENS = 'tokens'
+    MERGED_TOKENS = 'merged_tokens'
+    TRANSFERS = 'transfers'
+    DEPOSITS = 'deposits'
+    BORROWS = 'borrows'
+    REPAYS = 'repays'
+    WITHDRAWS = 'withdraws'
+    LIQUIDATES = 'liquidates'
+    CREDIT_SCORE_CONFIGS = 'credit_score_configs'
+    TOKEN_CREDIT_SCORE = 'token_credit_score'
+    TOKEN_CREDIT_SCORE_X1 = 'token_credit_score_x1'
+    TOKEN_CREDIT_SCORE_X2 = 'token_credit_score_x2'
+    TOKEN_CREDIT_SCORE_X3 = 'token_credit_score_x3'
+    TOKEN_CREDIT_SCORE_X4 = 'token_credit_score_x4'
+    TOKEN_CREDIT_SCORE_X5 = 'token_credit_score_x5'
+    TOKEN_CREDIT_SCORE_X6 = 'token_credit_score_x6'
+    TOKEN_CREDIT_SCORE_X7 = 'token_credit_score_x7'
+    MULTICHAIN_WALLETS_SIZE = 'multichain_wallets_size'
+
+    BATCH_SIZE = 1000
+
+
+DEFAULT_CREDIT_SCORE = 105
+MAX_CREDIT_SCORE = 1000
+MIN_CREDIT_SCORE = 0
+
+FORMATTER = logging.Formatter(fmt='[%(asctime)s] [%(levelname)s] [%(name)s] - %(message)s',
+                              datefmt='%m-%d-%Y %H:%M:%S %Z')
+LOG_FILE = 'logging.log'
+
+
+def get_console_handler():
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(FORMATTER)
+    return console_handler
+
+
+def get_file_handler():
+    file_handler = RotatingFileHandler(LOG_FILE, maxBytes=2000, backupCount=1)
+    file_handler.setFormatter(FORMATTER)
+    return file_handler
+
+
+def get_logger(logger_name):
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(get_console_handler())
+    # logger.addHandler(get_file_handler())
+    return logger

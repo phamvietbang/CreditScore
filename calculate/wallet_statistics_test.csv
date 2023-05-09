@@ -1,0 +1,7 @@
+variable,mean,std
+total_asset,6465,9637
+age_of_account,7266052,2282621
+transaction_amount,566,1000
+frequency_of_transaction,19,24
+deposit,1743,3118
+borrow,2992,5357

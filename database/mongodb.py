@@ -17,7 +17,7 @@ class MongoDB:
         if database:
             _db = database
 
-        self.connection_url = connection_url.split('@')[-1]
+        # self.connection_url = connection_url.split('@')[-1]
         self.connection = MongoClient(connection_url)
         if db_prefix:
             db_name = db_prefix + "_" + _db

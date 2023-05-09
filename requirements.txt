@@ -5,7 +5,7 @@ python-dateutil==2.7.0
 click==8.0.1
 ethereum-dasm==0.1.4
 base58
-requests
+requests==2.26.0
 pytest~=4.3.0
 timeout-decorator==0.4.1
 google-cloud-pubsub==0.39.1
@@ -15,4 +15,8 @@ pymongo==3.11.4
 pyetherchain==0.3.2
 python-dotenv==0.19.2
 QueryStateLib
-python-arango==7.3.4
+python-arango==7.2.0
+numpy
+scipy==1.7.3
+matplotlib
+seaborn
