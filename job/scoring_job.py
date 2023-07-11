@@ -78,12 +78,6 @@ class WalletScoresJob(BaseJob):
                 for wallet in wallets:
                     try:
                         updated = {"address": wallet.get("address")}
-                        credit_score, elements = calculate_credit_score(
-                            wallet, self.statistics, self.tokens, k=self.k, h=self.h,
-                            current_time=1679961600, return_elements=True
-                        )
-                        updated["current_time"] = update_scores_properties(wallet, credit_score, elements, 1679961600,
-                                                                           multichain=self.multichain)
                         for key, timestamp in wallet.get("scoringTimestamps").items():
                             credit_score, elements = calculate_credit_score(
                                 wallet, self.statistics, self.tokens, k=self.k, h=self.h,

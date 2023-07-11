@@ -16,11 +16,15 @@ def update_scores_properties(wallet, credit_score, elements, current_time, multi
         'creditScorex3': elements[2],
         'creditScorex4': elements[3],
         'creditScorex5': elements[4],
+        'creditScorex6': elements[5],
+        'creditScorex7': elements[6],
         'creditScorex1ChangeLogs': elements_change_logs[0],
         'creditScorex2ChangeLogs': elements_change_logs[1],
         'creditScorex3ChangeLogs': elements_change_logs[2],
         'creditScorex4ChangeLogs': elements_change_logs[3],
         'creditScorex5ChangeLogs': elements_change_logs[4],
+        'creditScorex6ChangeLogs': elements_change_logs[5],
+        'creditScorex7ChangeLogs': elements_change_logs[6]
     }
     if merged:
         updated['mergedWalletId'] = wallet['mergedWalletId']

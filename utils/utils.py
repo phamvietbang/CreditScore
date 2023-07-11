@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import List
 from config import get_logger
-from constants import ChainConstant, TokenCollections
+from constants.constants import ChainConstant, TokenCollections
 
 logger = get_logger(__name__)
 

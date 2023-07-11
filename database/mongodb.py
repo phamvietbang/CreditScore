@@ -46,7 +46,7 @@ class MongoDB:
     def update_document(self, collection, document, upsert=True):
         _collection = self.mongo_db[collection]
         try:
-            _collection.update({"_id": document["_id"]}, {"$set": flatten_dict(document)}, upsert=upsert)
+            _collection.update({"_id": document["_id"]}, {"$set": document}, upsert=upsert)
             success = True
         except Exception as e:
             logger.error(e)

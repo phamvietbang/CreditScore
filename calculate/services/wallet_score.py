@@ -2,9 +2,9 @@ import math
 import time
 
 from calculate.services.statistic_service import about, sum_frequency, get_average, \
-    get_return_on_investment, get_value_with_timestamp, get_standardized_score_info, get_logs_in_time
+    get_value_with_timestamp, get_standardized_score_info, get_logs_in_time
 from config import get_logger
-from constants import WalletStatisticFieldConstant, WalletCreditScoreWeightConstant, TimeConstant, \
+from constants.constants import WalletStatisticFieldConstant, WalletCreditScoreWeightConstant, TimeConstant, \
     KDaysWeightConstant
 from utils.utils import remove_null
 

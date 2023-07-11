@@ -69,7 +69,7 @@ def get_tscore_with_adjust(value, mean, std):
     return about(tscore)
 
 
-def about(value, _min=0, _max=1000):
+def about(value, _min=0, _max=850):
     if value < _min:
         value = _min
     elif value > _max:
@@ -498,7 +498,7 @@ def get_frequency_statistic(graph, chain_id=None, batch_size=100000):
     return mean, std
 
 
-def get_function_coefficients(value_low, value_high, score_low=500, score_high=1000):
+def get_function_coefficients(value_low, value_high, score_low=690, score_high=850):
     temp_1 = value_high / value_low
     temp_2 = score_high / score_low
     b = math.log(temp_2, temp_1)

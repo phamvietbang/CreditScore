@@ -16,6 +16,15 @@ class TokenMongoDBConfig:
     CONNECTION_URL = os.environ.get(
         "TOKEN_MONGO_CONNECTION_URL") or f'mongodb://{USERNAME}:{PASSWORD}@{MONGODB_HOST}:{MONGODB_PORT}'
 
+class PostgresqlDBConfig:
+    POSTGRESQLDB_HOST = os.environ.get("POSTGRESQLDB_HOST", '127.0.0.1')
+    POSTGRESQLDB_PORT = os.environ.get("POSTGRESQLDB_PORT", '5432')
+    POSTGRESQLDB_DATABASE = os.environ.get("POSTGRESQLDB_DATABASE", 'postgres')
+    POSTGRESQLDB_USER = os.environ.get("POSTGRESQLDB_USER", 'postgres')
+    POSTGRESQLDB_PASSWORD = os.environ.get("POSTGRESQLDB_PASSWORD", 'password')
+    POSTGRESQLDB_TABLE = os.environ.get("POSTGRESQLDB_TABLE", 'events')
+    CONNECTION_URL = os.environ.get("POSTGRESQLDB_CONNECTION_URL", 'url')
+    SCHEMA = os.environ.get("POSTGRES_SCHEMA", "public")
 
 class MongoConfig:
     HOST = os.getenv("MONGO_HOST")
@@ -25,6 +34,21 @@ class MongoConfig:
     CONNECTION_URL = os.getenv("MONGO_CONNECTION_URL") or f"mongodb://{USERNAME}:{PASSWORD}@{HOST}:{PORT}"
     DATABASE = 'LendingPools'
 
+class MongoDbKLGConfig:
+    HOST = "http://localhost:8529"
+    USERNAME = "root"
+    PASSWORD = "dev123"
+    # KLG_DATABASE = "klg_database"
+    KLG_DATABASE = "knowledge_graph"
+    KLG = "knowledge_graph"
+    WALLETS = 'wallets'
+    MULTICHAIN_WALLETS = 'multichain_wallets'
+    DEPOSITS = 'deposits'
+    BORROWS = 'borrows'
+    REPAYS = 'repays'
+    WITHDRAWS = 'withdraws'
+    LIQUIDATES = 'liquidates'
+    SMART_CONTRACTS = 'smart_contracts'
 
 class ArangoDBConfig:
     ARANGODB_HOST = os.getenv("ARANGODB_HOST", '0.0.0.0')

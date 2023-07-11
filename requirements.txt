@@ -16,7 +16,13 @@ pyetherchain==0.3.2
 python-dotenv==0.19.2
 QueryStateLib
 python-arango==7.2.0
-numpy
+psycopg2-binary
+# numpy
 scipy==1.7.3
-matplotlib
-seaborn
+# matplotlib
+# seaborn
+six~=1.16.0
+pandas~=2.0.2
+matplotlib~=3.7.1
+numpy~=1.22.4
+seaborn~=0.12.2

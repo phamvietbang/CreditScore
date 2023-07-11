@@ -4,7 +4,7 @@ import time
 from calculate.services.scores_service import update_scores_properties, update_scores_history, convert_data
 from calculate.services.wallet_score import calculate_credit_score, calculate_credit_score_with_info_return
 from config import get_logger, TokenMongoDBConfig
-from constants import GraphCreditScoreConfigKeys
+from constants.constants import GraphCreditScoreConfigKeys
 from database.arangodb_klg import ArangoDbKLG
 from database.mongodb_token import MongoDbToken
 from job.update_wallet_job import UpdateWalletJob

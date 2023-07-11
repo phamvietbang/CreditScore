@@ -2,10 +2,10 @@ import time
 
 from abi.vtoken import VTOKEN_ABI
 from abi.erc20_abi import ERC20_ABI
-from database.arangodb import ArangoDB
+from database.klg_mongodb import MongoDbKLG
 from database.mongodb import MongoDB
 from database.memory_storage import MemoryStorage
-from constants import Amount, CompoundForks, RemoveToken
+from constants.constants import Amount, CompoundForks, RemoveToken
 from job.cli_job import CLIJob
 from utils.logger_utils import get_logger
 from web3 import Web3, HTTPProvider
@@ -15,8 +15,23 @@ logger = get_logger("Liquidated Wallet")
 
 class ExportLiquidatedWalletJob(CLIJob):
     def __init__(
-            self, importer: MongoDB, exporter: MongoDB, token_db: MongoDB, arangodb: ArangoDB, batch_size, chain_id):
+            self,
+            importer: MongoDB,
+            exporter: MongoDB,
+            token_db: MongoDB,
+            arangodb: MongoDbKLG,
+            provider_uri,
+            batch_size,
+            chain_id):
         super().__init__()
+        self.pool_name = {
+            "0x75de5f7c91a89c16714017c7443eca20c7a8c295": "trava",
+            "0xe29a55a6aeff5c8b1beede5bcf2f0cb3af8f91f5": "valas",
+            "0xd61afaaa8a69ba541bc4db9c9b40d4142b43b9a4": "trava",
+            "0xd98bb590bdfabf18c164056c185fbb6be5ee643f": "trava",
+            "0x9fad24f572045c7869117160a571b2e50b10d068": "geist",
+            "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9": "aave"
+        }
         self.ctoken_addresses = None
         self.exchange_rate = None
         self.underlying = {}
@@ -27,7 +42,7 @@ class ExportLiquidatedWalletJob(CLIJob):
         self.importer = importer
         self.chain_id = chain_id
 
-        self.web3 = Web3(HTTPProvider('https://rpc.ankr.com/eth'))
+        self.web3 = Web3(HTTPProvider(provider_uri))
         self.local_storage = MemoryStorage.get_instance()
         self.get_underlying_ctoken()
         self.get_exchange_rate()
@@ -37,13 +52,16 @@ class ExportLiquidatedWalletJob(CLIJob):
         cursor = self.importer.get_documents(
             collection="lending_events",
             conditions={
-                "event_type": "LIQUIDATE"
+                "event_type": "LIQUIDATE",
+                "block_timestamp": {"$gte": 1680307200, "$lt": 1688169600},
+                "contract_address": '0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9'
             }
         )
         liquidators, debtors = [], []
         count = 0
         begin = time.time()
         for event in cursor:
+            self.exporter.update_document("lending_events", event)
             if "debt_asset" not in event:
                 event["debt_asset"] = self.underlying[event["contract_address"]]
             if event["collateral_asset"] in self.underlying:
@@ -69,6 +87,7 @@ class ExportLiquidatedWalletJob(CLIJob):
                     event["user"]: {
                         str(event["block_timestamp"]): {
                             "protocol": event["contract_address"],
+                            "protocolName": self.pool_name[event["contract_address"]],
                             "collateralAsset": event["collateral_asset"],
                             "collateralAmount": event["liquidated_collateral_amount"],
                             "collateralAssetInUSD": amount_in_usd[Amount.liquidated_collateral_amount_in_usd],
@@ -84,6 +103,7 @@ class ExportLiquidatedWalletJob(CLIJob):
                     event["wallet"]: {
                         str(event["block_timestamp"]): {
                             "protocol": event["contract_address"],
+                            "protocolName": self.pool_name[event["contract_address"]],
                             "debtAsset": event["debt_asset"],
                             "debtAmount": event["debt_to_cover"],
                             "debtAssetInUSD": amount_in_usd[Amount.debt_to_cover_in_usd],
@@ -114,7 +134,7 @@ class ExportLiquidatedWalletJob(CLIJob):
             contract = self.web3.eth.contract(
                 address=self.web3.toChecksumAddress(i), abi=VTOKEN_ABI)
             self.exchange_rate[self.underlying[i]] = contract.functions.exchangeRateCurrent().call() / 10 ** decimals
-        # return exchange_rate
+
 
     def get_token_price(self, token, time_):
         key = f"{self.chain_id}_{token}"
@@ -125,7 +145,7 @@ class ExportLiquidatedWalletJob(CLIJob):
                 {"_id": key}
             )
         if not price:
-            price = self.arangodb.get_token_price(key)
+            price = self.arangodb.get_smart_contract(key)
         result = price["price"]
         if "priceChangeLogs" in price and price["priceChangeLogs"]:
             for timestamp in price["priceChangeLogs"]:
@@ -149,6 +169,7 @@ class ExportLiquidatedWalletJob(CLIJob):
                 ctoken = data['reservesList'][token]['vToken']
                 self.underlying[ctoken] = token
                 self.ctoken_addresses[token] = ctoken
+                self.pool_name[ctoken] = key
                 if token == '0x0000000000000000000000000000000000000000':
                     self.decimals[token] = 18
                 else:

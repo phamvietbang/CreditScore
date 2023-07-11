@@ -7,7 +7,7 @@ from arango.exceptions import DocumentInsertError
 from arango.http import DefaultHTTPClient
 
 from config import ArangoDBConfig, get_logger
-from constants import ChainConstant, GraphCreditScoreConfigKeys, ArangoIndexConstant, TimeConstant
+from constants.constants import ChainConstant, GraphCreditScoreConfigKeys, ArangoIndexConstant, TimeConstant
 from model.arango_data_model import KnowledgeGraphModel
 from utils.utils import get_connection_elements
 from utils.utils import split_token, get_token_query
