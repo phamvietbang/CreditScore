@@ -38,8 +38,6 @@ def check_miss(mongo: MongoDB, arangodb: ArangoDbKLG, from_block: int, to_block:
 
 if __name__ == '__main__':
     event_types = ['DEPOSIT', 'BORROW', 'WITHDRAW', 'REPAY', 'LIQUIDATE']
-    mongo = MongoDB('mongodb://reader_bsc:travareaderbsc@128.199.149.45:27017/', 'blockchain_etl', 'bsc')
-    # arango = ArangoDbKLG('arangodb@root:200199@http://localhost:8529/')
-    arango = ArangoDbKLG('arangodb@root:dev123@http://206.189.47.152:8529/')
+    mongo = MongoDB('', 'blockchain_etl', 'bsc')
+    arango = ArangoDbKLG('')
     data = check_miss(mongo, arango, 58829350, 59051268, '0xfa', '1_1_1.json', event_types)
-    # data = check_miss(mongo, arango, 58980764, 58990764, '0xfa', '100_20_5.json', event_types)
