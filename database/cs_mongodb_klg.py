@@ -36,6 +36,11 @@ class MongoDB:
     def _create_index(self):
         ...
 
+    def get_smart_contract(self, chain_id, address):
+        key = f"{chain_id}_{address}"
+        filter_ = {"_id": key}
+        return self.mongo_db['smart_contracts'].find_one(filter_)
+
     #######################
     #      Wallets        #
     #######################
