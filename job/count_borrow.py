@@ -3,33 +3,34 @@ import json
 from database.cs_mongodb_klg import MongoDB as KLG
 from database.mongodb import MongoDB
 
-def calculate_borrow_all_chain():
+
+def calculate_all_chain(file):
     borrows = {}
     number_of_borrows = {}
     amount_of_borrows = {}
     n_borrows = {}
     for chain_id in ['0x38', '0xfa', '0x1', '0x89', '0xa86a', '0xa4b1', '0xa']:
-        with open(f'./liquidate/{chain_id}.json', 'r') as f:
+        with open(f'./{file}/{chain_id}.json', 'r') as f:
             data = json.loads(f.read())
-        for key, value in data['borrows'].items():
+        for key, value in data['amount'].items():
             if key in borrows:
                 borrows[key] += value
             else:
                 borrows[key] = value
 
-        for key, value in data['n_borrows'].items():
+        for key, value in data['n_events'].items():
             if key in n_borrows:
                 n_borrows[key] += value
             else:
                 n_borrows[key] = value
 
-        for key, value in data['amount_of_borrows'].items():
+        for key, value in data['amount_of_events'].items():
             if key in amount_of_borrows:
                 amount_of_borrows[key] += value
             else:
                 amount_of_borrows[key] = value
 
-        for key, value in data['number_of_borrows'].items():
+        for key, value in data['number_of_events'].items():
             if key in number_of_borrows:
                 number_of_borrows[key] += value
             else:
@@ -43,12 +44,12 @@ def calculate_borrow_all_chain():
     for key, value in number_of_borrows.items():
         if value in n_borrows[mode_n_key]:
             mode_n_total_borrow += amount_of_borrows[key]
-    with open("borrows/all.json", 'w') as f:
+    with open(f"{file}/all.json", 'w') as f:
         data = {
-            "borrows": borrows,
-            "n_borrows": n_borrows,
-            "number_of_borrows": number_of_borrows,
-            "amount_of_borrows": amount_of_borrows
+            "events": borrows,
+            "n_events": n_borrows,
+            "number_of_events": number_of_borrows,
+            "amount_of_events": amount_of_borrows
         }
         json.dump(data, f, indent=1)
     print("Number of wallets: ", number_of_wallets)
@@ -60,6 +61,7 @@ def calculate_borrow_all_chain():
     print("Percentage mode n borrows: ", mode_n_total_borrow / total_borrow)
     print("number of borrows:", total_number_of_borrow)
     print('Borrow amount: ', total_borrow)
+
 
 class BorrowAnalytic:
     def __init__(self, mongo: MongoDB, mongo_klg: KLG, chain_id):
@@ -80,6 +82,7 @@ class BorrowAnalytic:
             if len(value) > max_:
                 mode_amount = sum(value)
                 mode_key = key
+                max_ = len(value)
         return mode_amount, mode_key
 
     def get_ctokens(self):
@@ -146,23 +149,27 @@ class BorrowAnalytic:
         for key, value in number_of_liquidates.items():
             if value in n_liquidates[mode_n_key]:
                 mode_n_total_liquidate += amount_of_liquidates[key]
+
+        with open(f"./users/debtor_{self.chain_id}.json", 'w') as f:
+            json.dump(list(amount_of_liquidates.keys()), f, indent=1)
         with open(f"./liquidate/{self.chain_id}.json", 'w') as f:
             data = {
-                "borrows": liquidates,
-                "n_borrows": n_liquidates,
-                "number_of_borrows": number_of_liquidates,
-                "amount_of_borrows": amount_of_liquidates
+                "amount": liquidates,
+                "n_events": n_liquidates,
+                "number_of_events": number_of_liquidates,
+                "amount_of_events": amount_of_liquidates
             }
             json.dump(data, f, indent=1)
-        # print("Number of wallets: ", number_of_wallets)
-        # print("Average amount of wallets: ", total_liquidate / number_of_wallets)
-        # print("Mode amount: ", mode_key)
-        # print("Percentage mode amount: ", mode_amount / total_liquidate)
-        # print("Average number of wallets: ", total_number_of_liquidate / number_of_wallets)
-        # print("Mode number of liquidates: ", mode_n_key)
-        # print("Percentage mode n liquidates: ", mode_n_total_liquidate / total_liquidate)
-        # print("Number of liquidates:", total_number_of_liquidate)
-        # print('Liquidate amount: ', total_liquidate)
+        print("Number of wallets: ", number_of_wallets)
+        print("Average amount of wallets: ", total_liquidate / number_of_wallets)
+        print("Average amount of events: ", total_liquidate / total_number_of_liquidate)
+        print("Mode amount: ", mode_key)
+        print("Percentage mode amount: ", mode_amount / total_liquidate)
+        print("Average number of wallets: ", total_number_of_liquidate / number_of_wallets)
+        print("Mode number of liquidates: ", mode_n_key)
+        print("Percentage mode n liquidates: ", mode_n_total_liquidate / total_liquidate)
+        print("Number of liquidates:", total_number_of_liquidate)
+        print('Liquidate amount: ', total_liquidate)
 
     def count_number_of_borrow_event(self, start_timestamp, end_timestamp, wallets):
         events = self.mongo.get_documents("lending_events",
@@ -209,6 +216,8 @@ class BorrowAnalytic:
             n_borrows[round_number_of_borrows].append(value)
 
         number_of_wallets = len(amount_of_borrows)
+        with open(f"./users/borrower_{self.chain_id}.json", 'w') as f:
+            json.dump(list(amount_of_borrows.keys()), f, indent=1)
         total_number_of_borrow = sum(number_of_borrows.values())
         total_borrow = sum(amount_of_borrows.values())
         mode_amount, mode_key = self.find_mode(borrows)
@@ -219,21 +228,22 @@ class BorrowAnalytic:
                 mode_n_total_borrow += amount_of_borrows[key]
         with open(f"./borrows/{self.chain_id}.json", 'w') as f:
             data = {
-                "borrows": borrows,
-                "n_borrows": n_borrows,
-                "number_of_borrows": number_of_borrows,
-                "amount_of_borrows": amount_of_borrows
+                "amount": borrows,
+                "n_events": n_borrows,
+                "number_of_events": number_of_borrows,
+                "amount_of_events": amount_of_borrows
             }
             json.dump(data, f, indent=1)
-        # print("Number of wallets: ", number_of_wallets)
-        # print("Average amount of wallets: ", total_borrow / number_of_wallets)
-        # print("Mode amount: ", mode_key)
-        # print("Percentage mode amount: ", mode_amount / total_borrow)
-        # print("Average number of wallets: ", total_number_of_borrow / number_of_wallets)
-        # print("Mode number of borrows: ", mode_n_key)
-        # print("Percentage mode n borrows: ", mode_n_total_borrow / total_borrow)
-        # print("number of borrows:", total_number_of_borrow)
-        # print('Borrow amount: ', total_borrow)
+        print("Number of wallets: ", number_of_wallets)
+        print("Average amount of wallets: ", total_borrow / number_of_wallets)
+        print("Average amount of events: ", total_borrow / total_number_of_borrow)
+        print("Mode amount: ", mode_key)
+        print("Percentage mode amount: ", mode_amount / total_borrow)
+        print("Average number of wallets: ", total_number_of_borrow / number_of_wallets)
+        print("Mode number of borrows: ", mode_n_key)
+        print("Percentage mode n borrows: ", mode_n_total_borrow / total_borrow)
+        print("number of borrows:", total_number_of_borrow)
+        print('Borrow amount: ', total_borrow)
 
     def count_number_of_borrow_user(self, start_timestamp, end_timestamp):
         events = self.mongo.get_documents("lending_events",
@@ -243,7 +253,7 @@ class BorrowAnalytic:
         for event in events:
             wallet = event['wallet']
             wallets.append(wallet)
-        with open(f"./users/borrow_{self.chain_id}.json", 'w') as f:
+        with open(f"./users/borrow_user_{self.chain_id}.json", 'w') as f:
             json.dump(wallets, f, indent=1)
 
     def count_number_of_liquidate_user(self, start_timestamp, end_timestamp):
@@ -254,19 +264,22 @@ class BorrowAnalytic:
         for event in events:
             wallet = event['wallet']
             wallets.append(wallet)
-        with open(f"./users/liquidate_{self.chain_id}.json", 'w') as f:
+        with open(f"./users/liquidate_user_{self.chain_id}.json", 'w') as f:
             json.dump(wallets, f, indent=1)
 
+
 if __name__ == "__main__":
-    with open(f"Score/Fair.json", "r") as f:
+    start_time = 1690848000
+    end_time = 1693526400
+    with open(f"Score/Very Good.json", "r") as f:
         wallets = json.loads(f.read())
-    mongo = MongoDB(
-        "mongodb://etlReader:etl_reader_tsKNV6KFr2GWqqqZ@34.126.84.83:27017,34.142.204.61:27017,34.142.219.60:27017/",
-        database='blockchain_etl', db_prefix="avalanche")
-    klg = KLG("mongodb://klgWriter:klgEntity_writer523@35.198.222.97:27017,34.124.133.164:27017,34.124.205.24:27017")
-    job = BorrowAnalytic(mongo, klg, chain_id="0xa86a")
-    # job.count_number_of_liquidate_user(start_timestamp=1688169600, end_timestamp=1690848000)
-    # job.count_number_of_borrow_user(start_timestamp=1688169600, end_timestamp=1690848000)
-    # job.count_number_of_borrow_event(start_timestamp=1688169600, end_timestamp=1690848000, wallets=wallets)
-    # job.count_number_of_liquidate_event(start_timestamp=1688169600, end_timestamp=1690848000, wallets=wallets)
-    calculate_borrow_all_chain()
+    # wallets = None
+    mongo = MongoDB(connection_url="", db_prefix="ftm")
+    klg = KLG(connection_url="")
+    # job.count_number_of_liquidate_user(start_timestamp=start_time, end_timestamp=end_time)
+    # job.count_number_of_borrow_user(start_timestamp=start_time, end_timestamp=end_time)
+    # job.count_number_of_borrow_event(start_timestamp=start_time, end_timestamp=end_time, wallets=wallets)
+    calculate_all_chain("borrows")
+    print(".---------------------------------.")
+    # job.count_number_of_liquidate_event(start_timestamp=start_time, end_timestamp=end_time, wallets=wallets)
+    # calculate_all_chain("liquidate")

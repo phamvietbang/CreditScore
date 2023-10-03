@@ -1,6 +1,6 @@
 {
- "borrows": {},
- "n_borrows": {},
- "number_of_borrows": {},
- "amount_of_borrows": {}
+ "amount": {},
+ "n_events": {},
+ "number_of_events": {},
+ "amount_of_events": {}
 }
