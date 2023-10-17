@@ -132,3 +132,26 @@ def remove_null(change_logs: dict):
         if change_logs[key] is None:
             change_logs.pop(key)
     return change_logs
+
+
+def sort_log_without_null(change_logs: dict):
+    if not change_logs:
+        return {}
+
+    change_logs = {int(t): v for t, v in change_logs.items()}
+    change_logs = dict(sorted(change_logs.items(), key=lambda x: x[0]))
+
+    keys = list(change_logs.keys())
+    for key in keys:
+        if change_logs[key] is None:
+            change_logs.pop(key)
+    return change_logs
+
+
+def get_value_with_timestamp(dict_, timestamp):
+    result = 0
+    for key, value in dict_.items():
+        result = value
+        if int(key) > int(timestamp):
+            break
+    return result

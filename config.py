@@ -24,7 +24,7 @@ class PostgresqlDBConfig:
     POSTGRESQLDB_PASSWORD = os.environ.get("POSTGRESQLDB_PASSWORD", 'password')
     POSTGRESQLDB_TABLE = os.environ.get("POSTGRESQLDB_TABLE", 'events')
     CONNECTION_URL = os.environ.get("POSTGRESQLDB_CONNECTION_URL", 'url')
-    SCHEMA = os.environ.get("POSTGRES_SCHEMA", "public")
+    SCHEMA = os.environ.get("POSTGRES_SCHEMA", "chain_0x38")
 
 class MongoConfig:
     HOST = os.getenv("MONGO_HOST")

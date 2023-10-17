@@ -18,19 +18,21 @@ class EventProcessor:
         self.klg = klg_mongodb
         self.postgres = postgres
 
-    def export_evt_tf(self):
-        data = pd.read_csv("tfevent/bsc.csv")
+    def export_evt_tf(self, file, chain_id):
+        data = pd.read_csv(file)
         result = []
         token_decimals = []
         dict_token_decimals = {}
-        tokens = self.klg.get_document("configs", {"_id": "top_tokens_0x38"})
+        tokens = self.klg.get_document("configs", {"_id": f"top_tokens_{chain_id}"})
         token_list = []
         for token in tokens["tokens"]:
             token_list.append(token["address"])
         for pos in range(len(data['evt_block_number'])):
             token = data["contract_address"][pos]
+            # if token not in token_list:
+            #     continue
             if token not in token_list:
-                continue
+                dict_token_decimals[token] = 18
             if token not in dict_token_decimals:
                 decimals = list(self.postgres.get_decimals([token]))
                 if not decimals:
@@ -144,15 +146,37 @@ class EventProcessor:
             json.dump(sorted_by_amount_1, f, indent=1)
 
     def export_tx(self, tx_mongodb: MongoDB, main_mongodb: MongoDB, start_block, end_block, range_block):
-        cursor = self.mongodb.get_documents("debtors", {})
-        wallets = []
-        for wallet in cursor:
-            wallets.append(wallet["_id"])
+        # cursor = self.mongodb.get_documents("debtors", {})
+        # wallets = []
+        # for wallet in cursor:
+        #     wallets.append(wallet["_id"])
+        with open("debtors.json", 'r') as f:
+            wallets = json.loads(f.read())
         for idx in range(start_block, end_block, range_block):
             cursor = main_mongodb.get_documents(
-                "transactions", {"from_address": {"$in": wallets}, "block_number": {"$gte": idx, "$lte": idx + 1000}})
+                "transactions",
+                {"from_address": {"$in": wallets}, "block_number": {"$gte": idx, "$lte": idx + range_block}})
             for data in cursor:
                 tx_mongodb.update_document("transactions", data)
-            print(f"Exported from {idx} to {idx + 1000}")
+            print(f"Exported from {idx} to {idx + range_block}")
 
 
+if __name__ == "__main__":
+    mongodb = MongoDB("mongodb://localhost:27017/", database="blockchain_etl", db_prefix="polygon")
+    main_mongo = MongoDB(
+        "mongodb://etlReader:etl_reader_tsKNV6KFr2GWqqqZ@34.126.84.83:27017,34.142.204.61:27017,34.142.219.60:27017/",
+        database="blockchain_etl", db_prefix="polygon")
+    klg_mongodb = MongoDB(
+        connection_url="mongodb://klgWriter:klgEntity_writer523@35.198.222.97:27017,34.124.133.164:27017,34.124.205.24:27017/",
+        database="knowledge_graph")
+    postgres = TransferPostgresqlStreamingExporter(connection_url="postgresql://postgres:1369@localhost:5432/postgres")
+    job = EventProcessor(
+        provider="https://rpc.ankr.com/polygon",
+        mongodb=mongodb,
+        main_mongo=main_mongo,
+        klg_mongodb=klg_mongodb,
+        postgres=postgres
+    )
+    # job.export_evt_tf("./tfevent/polygon.csv", "0x89")
+    # job.export_evt_tf("./tfevent/polygon2.csv", "0x89")
+    # job.export_tx(mongodb, main_mongo, 17382265, 17595509, 100000)

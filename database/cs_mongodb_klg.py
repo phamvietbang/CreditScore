@@ -274,8 +274,8 @@ class MongoDB:
         projection = [
             'total_asset', 'age_of_account',
             'transaction_amount', 'frequency_of_transaction',
-            'deposit', 'borrow', 'frequency_of_dapp_transaction',
-            'number_of_dapps'
+            'deposit', 'borrow', 'frequency_dapp_txs',
+            'interacted_dapp_types', 'number_of_dapps', 'reputation_interacted_projects'
         ]
         doc = self._configs_col.find_one(filter_statement, projection=projection)
         return doc

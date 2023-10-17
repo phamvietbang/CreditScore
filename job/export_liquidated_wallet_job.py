@@ -30,7 +30,11 @@ class ExportLiquidatedWalletJob(CLIJob):
             "0xd61afaaa8a69ba541bc4db9c9b40d4142b43b9a4": "trava",
             "0xd98bb590bdfabf18c164056c185fbb6be5ee643f": "trava",
             "0x9fad24f572045c7869117160a571b2e50b10d068": "geist",
-            "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9": "aave"
+            "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9": "aave",
+            '0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2': "aave",
+            '0x8dff5e27ea6b7ac08ebfdf9eb090f32ee9a30fcf': "aave",
+            '0x794a61358d6845594f94dc1db02a252b5b4814ad': "aave",
+            '0x4f01aed16d97e3ab5ab2b501154dc9bb0f1a5a2c': "aave",
         }
         self.ctoken_addresses = None
         self.exchange_rate = None
@@ -53,8 +57,14 @@ class ExportLiquidatedWalletJob(CLIJob):
             collection="lending_events",
             conditions={
                 "event_type": "LIQUIDATE",
-                "block_timestamp": {"$gte": 1680307200, "$lt": 1688169600},
-                "contract_address": '0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9'
+                "block_timestamp": {"$gte": 1688169600, "$lt": 1696118400},
+                "contract_address": {"$in": [
+                    '0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9',
+                    '0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2',
+                    '0x8dff5e27ea6b7ac08ebfdf9eb090f32ee9a30fcf',
+                    '0x794a61358d6845594f94dc1db02a252b5b4814ad',
+                    '0x4f01aed16d97e3ab5ab2b501154dc9bb0f1a5a2c',
+                ]}
             }
         )
         liquidators, debtors = [], []
@@ -76,8 +86,8 @@ class ExportLiquidatedWalletJob(CLIJob):
                     amount_in_usd[key] = event[key]
                 elif key == Amount.liquidated_collateral_amount_in_usd:
                     amount_in_usd[key] = event[Amount.mapping[key]] * \
-                                        self.exchange_rate.get(event['collateral_asset'], 1) * \
-                                        self.get_token_price(event[Amount.token[key]], event["block_timestamp"])
+                                         self.exchange_rate.get(event['collateral_asset'], 1) * \
+                                         self.get_token_price(event[Amount.token[key]], event["block_timestamp"])
                 else:
                     amount_in_usd[key] = event[Amount.mapping[key]] * \
                                          self.get_token_price(event[Amount.token[key]], event["block_timestamp"])
@@ -135,17 +145,17 @@ class ExportLiquidatedWalletJob(CLIJob):
                 address=self.web3.toChecksumAddress(i), abi=VTOKEN_ABI)
             self.exchange_rate[self.underlying[i]] = contract.functions.exchangeRateCurrent().call() / 10 ** decimals
 
-
     def get_token_price(self, token, time_):
         key = f"{self.chain_id}_{token}"
         price = self.local_storage.get(key)
+        if not price:
+            price = self.arangodb.get_smart_contract(key)
         if not price:
             price = self.token_db.get_document(
                 "token_price",
                 {"_id": key}
             )
-        if not price:
-            price = self.arangodb.get_smart_contract(key)
+
         result = price["price"]
         if "priceChangeLogs" in price and price["priceChangeLogs"]:
             for timestamp in price["priceChangeLogs"]:
@@ -163,7 +173,7 @@ class ExportLiquidatedWalletJob(CLIJob):
         self.underlying = {}
         self.ctoken_addresses = {}
         self.decimals = {}
-        for key in CompoundForks.chain[self.chain_id]:
+        for key in CompoundForks.chain.get(self.chain_id, {}):
             data = self.arangodb.get_ctoken_information(CompoundForks.mapping[key])
             for token in data["reservesList"]:
                 ctoken = data['reservesList'][token]['vToken']

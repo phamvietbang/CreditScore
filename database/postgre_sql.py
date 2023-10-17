@@ -31,6 +31,18 @@ class TransferPostgresqlStreamingExporter:
         data = self.session.execute(table.select().where(table.c.address.in_(keys)))
         return data.cursor
 
+    def get_token_transfer(self, address, token, from_block, to_block):
+        table = SQLTables.token_transfer
+        query = f"""
+        SELECT * FROM {PostgresqlDBConfig.SCHEMA}.token_transfer
+        WHERE (block_number BETWEEN {from_block} AND {to_block})
+        AND (from_address == {address} OR to_address == {address})
+        AND contract_address == {token}
+        """
+
+        data = self.session.execute(query)
+        return data.cursor
+
     def export_items(self, operations_data: list) -> None:
         if not operations_data:
             return

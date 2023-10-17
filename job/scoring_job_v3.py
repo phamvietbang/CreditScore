@@ -66,7 +66,6 @@ class WalletScoresJob(BaseJob):
         for batch_idx in wallets_batch_indicates:
             try:
                 start_time = time.time()
-                current_time = int(time.time())
                 wallets = self._graph.get_all_multichain_wallets()
                 updated_wallets = []
                 for wallet in wallets:

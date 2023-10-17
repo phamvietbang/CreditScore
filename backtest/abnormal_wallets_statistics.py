@@ -28,14 +28,12 @@ def cal_params(data):
 mongodb = MongoDB("mongodb://localhost:27017/", "blockchain_etl", db_prefix="ethereum")
 klg_mongodb = MongoDB(connection_url="mongodb://localhost:27017/", database="knowledge_graph")
 abnormal_wallets = klg_mongodb.get_document("configs", "abnormal_wallets")
-all = abnormal_wallets["abnormal_one_liquidated_wallets"] + abnormal_wallets[
-    "abnormal_multiple_liquidated_wallets"]
-data = klg_mongodb.get_documents("multichain_wallets_credit_scores", {"_id": {"$in": all}})
+data = klg_mongodb.get_documents("multichain_wallets_credit_scores", {})
 boxplot_1_week = {"x1": [], "x2": [], "x3": [], "x4": [], "x5": [], "x6": [], "x7": []}
 boxplot_1_hour = {"x1": [], "x2": [], "x3": [], "x4": [], "x5": [], "x6": [], "x7": []}
 for wallet in data:
     for key in wallet:
-        if key in ["_id", "address", "flagged"]:
+        if key in ["_id", "address", "flagged", "count","maxTime", "minTime"]:
             continue
         start_time = str(int(key) - 7 * 24 * 3600)
         _hour = str(int(key) - 24 * 3600)

@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 from matplotlib import pyplot as plt
 
@@ -5,25 +7,19 @@ from database.mongodb import MongoDB
 
 
 class HistogramDrawer:
-    def __init__(self, mongodb: MongoDB, klg_mongodb: MongoDB):
-        self.mongodb = mongodb
+    def __init__(self, klg_mongodb: MongoDB):
         self.klg_mongodb = klg_mongodb
 
     def draw_histogram_one_time_liquidated_wallets(self):
-        users = self.mongodb.get_document("configs", {"_id": "wallet_cluster"})
-        abnormal_wallets = self.klg_mongodb.get_document("configs", "abnormal_wallets")
-        _all = abnormal_wallets["abnormal_one_liquidated_wallets"] + abnormal_wallets[
-            "abnormal_multiple_liquidated_wallets"]
-        one_liquidated_wallets, _, _ = self.get_debtor_info(users, _all)
         wallets = self.klg_mongodb.get_documents("multichain_wallets_credit_scores",
-                                                 {"_id": {"$in": one_liquidated_wallets}})
+                                                 {"count": 1})
         score = {}
 
         for i in range(1, 16):
             score[f"t{i}"] = {"<580": 0, "580-669": 0, "670-739": 0, "740-799": 0, "800-850": 0}
         for wallet in wallets:
             for key in wallet:
-                if key in ["_id", "address", "flagged", "buyers", "count", "last_score_change"]:
+                if key in ["_id", "address", "flagged", "minTime", "count", "maxTime"]:
                     continue
                 scores = dict(sorted(wallet[key].items(), key=lambda x: x[0]))
                 list_time = [key, str(int(key) - 3600), str(int(key) + 3600)]
@@ -55,23 +51,19 @@ class HistogramDrawer:
         plt.savefig("hist1.png")
 
     def draw_histogram_multiple_times_liquidated_wallets(self):
-        users = self.mongodb.get_document("configs", {"_id": "wallet_cluster"})
-        abnormal_wallets = self.klg_mongodb.get_document("configs", "abnormal_wallets")
-        _all = abnormal_wallets["abnormal_one_liquidated_wallets"] + abnormal_wallets[
-            "abnormal_multiple_liquidated_wallets"]
-        _, multiple_liquidated_wallets, liquidate_time = self.get_debtor_info(users, _all)
+
         wallets = self.klg_mongodb.get_documents(
-            "multichain_wallets_credit_scores", {"_id": {"$in": multiple_liquidated_wallets}})
+            "multichain_wallets_credit_scores", {"count":{"$gt":1}})
         score = {}
         for i in range(1, 17):
             score[f"t{i}"] = {"<580": 0, "580-669": 0, "670-739": 0, "740-799": 0, "800-850": 0}
         for wallet in wallets:
-            start_lq_time = liquidate_time[wallet['_id']][0]
-            end_lq_time = liquidate_time[wallet['_id']][-1]
-            score_start = dict(sorted(wallet[start_lq_time].items(), key=lambda x: x[0]))
-            score_end = dict(sorted(wallet[end_lq_time].items(), key=lambda x: x[0]))
+            start_lq_time = wallet['minTime']
+            end_lq_time = wallet['maxTime']
+            score_start = dict(sorted(wallet[str(start_lq_time)].items(), key=lambda x: x[0]))
+            score_end = dict(sorted(wallet[str(end_lq_time)].items(), key=lambda x: x[0]))
             score_start.update(score_end)
-            list_time = [start_lq_time, end_lq_time,
+            list_time = [str(start_lq_time), str(end_lq_time),
                          str(int(end_lq_time) + 3600),
                          str(int(start_lq_time) - 3600)]
             for tmp in range(1, 7):
@@ -131,3 +123,11 @@ class HistogramDrawer:
                 liquidate_time[debtor['_id']] = debtor["liquidate_time"]
 
         return one_liquidated_wallets, multiple_liquidated_wallets, liquidate_time
+
+if __name__ == "__main__":
+    klg_mongo = MongoDB("mongodb://localhost:27017/", database="knowledge_graph")
+    with open('user.json', 'r') as f:
+        elite_wallets = json.loads(f.read())
+    job = HistogramDrawer(klg_mongo)
+    job.draw_histogram_one_time_liquidated_wallets()
+    # job.draw_histogram_multiple_times_liquidated_wallets()

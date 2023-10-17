@@ -12,11 +12,19 @@ class TimeConstants:
 class Chain:
     bsc = "bsc"
     ftm = "ftm"
-    eth = "eth"
+    eth = "ethereum"
+    polygon = 'polygon'
+    arbitrum = 'arbitrum'
+    optimism = 'optimism'
+    avalanche = 'avalanche'
     mapping = {
         bsc: "0x38",
         ftm: "0xfa",
-        eth: "0x1"
+        eth: "0x1",
+        polygon: "0x89",
+        arbitrum: "0xa4b1",
+        optimism: "0xa",
+        avalanche: "0xa86a"
     }
 
 
@@ -45,10 +53,12 @@ class CompoundForks:
     bsc = ["venus", "cream"]
     eth = ["compound"]
     ftm = []
+    polygon = []
     chain = {
         "0x38": bsc,
         "0x1": eth,
-        "0xfa": ftm
+        "0xfa": ftm,
+        "0x89": polygon
     }
 
 
@@ -62,7 +72,7 @@ class RemoveToken:
 
 
 class GraphCreditScoreConfigKeys:
-    wallet_statistics = 'wallet_statistics'
+    wallet_statistics = 'wallet_statistics_v3'
     token_statistics = 'token_statistics'
     multichain_wallets_flagged_state = 'multichain_wallets_flagged_state'
     wallets_flagged_state = 'wallets_flagged_state'
