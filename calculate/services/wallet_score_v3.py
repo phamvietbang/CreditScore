@@ -2,7 +2,8 @@ import math
 import time
 
 from calculate.services.statistic_service_v3 import about, sum_frequency, get_average, \
-    get_value_with_timestamp, get_standardized_score_info, get_logs_in_time, about_liquidate
+    get_value_with_timestamp, get_standardized_score_info, get_logs_in_time, about_liquidate, \
+    get_list_value_with_timestamp
 from config import get_logger
 
 from constants.constants_v3 import WalletStatisticFieldConstant, WalletCreditScoreWeightConstantV3, TimeConstant, \
@@ -156,6 +157,8 @@ def calculate_x156(wallet, statistics, current_time, timestamp_chosen=0, h=10, r
         x5_info['loan_to_investment'] = loan_to_investment
 
     # x5 - Loan ratios
+    x51 = WalletCreditScoreWeightConstantV3.b51 * x51
+    x52 = WalletCreditScoreWeightConstantV3.b52 * x52
     x5 = about(x51 - x52)
 
     # x6 - Circulating asset
@@ -198,15 +201,15 @@ def calculate_x234(wallet, statistics, current_time=time.time(), timestamp_chose
     created_at = wallet.get('createdAt') or 0
     daily_transaction_amounts = sort_log_without_null(wallet.get('dailyTransactionAmounts'))
     daily_frequency_of_transactions = sort_log_without_null(wallet.get('dailyNumberOfTransactions'))
-    frequency_of_dapp_transactions = get_value_with_timestamp(wallet.get('frequencyOfDappTransactions', {}), str(current_time))
-    number_of_interacted_dapps = get_value_with_timestamp(wallet.get('numberOfInteractedDapps', {}), str(current_time))
-    reputation_interacted_dapps = get_value_with_timestamp(wallet.get('numberOfReputableDapps', {}), str(current_time))
-    types_of_dapps = get_value_with_timestamp(wallet.get('typesOfInteractedDapps', {}), str(current_time))
+    frequency_of_dapp_transactions = sort_log_without_null(wallet.get('frequencyOfDappTransactions', {}))
+    number_of_interacted_dapps = get_list_value_with_timestamp(wallet.get('numberOfInteractedDapps', {}), str(current_time))
+    reputation_interacted_dapps = get_list_value_with_timestamp(wallet.get('numberOfReputableDapps', {}), str(current_time))
+    types_of_dapps = get_list_value_with_timestamp(wallet.get('typesOfInteractedDapps', {}), str(current_time))
 
     number_of_liquidation = 0
     total_amount_of_liquidation = 0
     liquidation_logs = wallet.get("liquidationLogs", {}).get("liquidatedWallet", {})
-    for wallet, liquidation in liquidation_logs.items():
+    for address, liquidation in liquidation_logs.items():
         for timestamp_, value in liquidation.items():
             if int(timestamp_) <= current_time:
                 number_of_liquidation += 1
@@ -214,6 +217,8 @@ def calculate_x234(wallet, statistics, current_time=time.time(), timestamp_chose
 
     x2_info, x3_info, x4_info = {}, {}, {}
     # x21 - frequency of dapp transaction
+    frequency_of_dapp_transactions = sum(
+        [v for t, v in frequency_of_dapp_transactions.items() if timestamp_chosen < t < current_time])
     if frequency_of_dapp_transactions < 0:
         frequency_of_dapp_transactions = 0
     frequency_statistic = statistics[WalletStatisticFieldConstant.frequency_of_dapp_transaction]
@@ -257,7 +262,10 @@ def calculate_x234(wallet, statistics, current_time=time.time(), timestamp_chose
     if daily_transaction_amount < 0:
         daily_transaction_amount = 0
     amount_statistic = statistics[WalletStatisticFieldConstant.transaction_amount]
-    x31 = about(amount_statistic['coefficient_a'] * pow(daily_transaction_amount, amount_statistic['coefficient_b']))
+    try:
+        x31 = about(amount_statistic['coefficient_a'] * pow(daily_transaction_amount, amount_statistic['coefficient_b']))
+    except Exception as e:
+        raise e
     x3_info['daily_transaction_amount'] = daily_transaction_amount
 
     # x32 - frequency of transaction
@@ -266,8 +274,8 @@ def calculate_x234(wallet, statistics, current_time=time.time(), timestamp_chose
     if daily_frequency_of_transaction < 0:
         daily_frequency_of_transaction = 0
     frequency_statistic = statistics[WalletStatisticFieldConstant.frequency_of_transaction]
-    x32 = about(frequency_statistic['coefficient_a'] * pow(daily_frequency_of_transaction,
-                                                           frequency_statistic['coefficient_b']))
+    x32 = about(frequency_statistic['coefficient_a'] * pow(
+        daily_frequency_of_transaction, frequency_statistic['coefficient_b']))
     x3_info['daily_frequency_of_transaction'] = daily_frequency_of_transaction
 
     # x41 - Age of account
@@ -285,7 +293,7 @@ def calculate_x234(wallet, statistics, current_time=time.time(), timestamp_chose
 
     # x43 - total value of liquidations
     x4_info['total_amount_of_liquidation'] = total_amount_of_liquidation
-    x43 = about_liquidate(0.85 * (1000 - 0.1 * total_amount_of_liquidation))
+    x43 = about_liquidate(0.85 * (1000 - 0.1*total_amount_of_liquidation))
 
     # x2 - DApp interactions
     x2 = WalletCreditScoreWeightConstantV3.b21 * x21 + \

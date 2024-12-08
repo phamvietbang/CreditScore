@@ -53,7 +53,7 @@ print(sum(boxplot_1_week["x2"]) / len(boxplot_1_week["x2"]))
 print(sum(boxplot_1_week["x4"]) / len(boxplot_1_week["x4"]))
 fig, axs = plt.subplots(nrows=1, ncols=1, )
 
-axs.set_title('Score change in from 1 week ago to liquidation')
+axs.set_title('Score change from 1 week ago to liquidation')
 axs.boxplot(boxplot_1_week.values(), labels=[i for i in boxplot_1_week.keys()])
 # axs[1].set_title('Score change in from 1 day ago to liquidation')
 # axs[1].boxplot(boxplot_1_hour.values(), labels = [i for i in boxplot_1_hour.keys()])

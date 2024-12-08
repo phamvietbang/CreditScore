@@ -1,6 +1,3 @@
-import json
-
-import pandas as pd
 from matplotlib import pyplot as plt
 
 from database.mongodb import MongoDB
@@ -15,34 +12,21 @@ class HistogramDrawer:
                                                  {"count": 1})
         score = {}
 
-        for i in range(1, 16):
+        for i in range(1, 17):
             score[f"t{i}"] = {"<580": 0, "580-669": 0, "670-739": 0, "740-799": 0, "800-850": 0}
         for wallet in wallets:
-            for key in wallet:
-                if key in ["_id", "address", "flagged", "minTime", "count", "maxTime"]:
-                    continue
-                scores = dict(sorted(wallet[key].items(), key=lambda x: x[0]))
-                list_time = [key, str(int(key) - 3600), str(int(key) + 3600)]
-                for tmp in range(1, 7):
-                    list_time += [
-                        str(int(key) - 3600 * 24 * tmp),
-                        str(int(key) + 3600 * 24 * tmp)
-                    ]
-                list_time.sort()
-                keys = list(scores.keys())
-                keys.sort()
-                pos = 1
-                for time_ in list_time:
-                    if time_ not in keys:
-                        score[f"t{pos}"] = score[f"t{pos - 1}"]
-                        continue
-                    value = scores[time_]["creditScore"]
-                    self.check_value(value, score, pos)
-                    pos += 1
+            scores = dict(sorted(wallet["scores"].items(), key=lambda x: x[0]))
+            list_time = list(wallet["scores"].keys())
+            list_time.sort()
+            pos = 1
+            for time_ in list_time:
+                value = scores[time_]["creditScore"]
+                self.check_value(value, score, pos)
+                pos += 1
 
-        _, axs = plt.subplots(1, 2, figsize=(10, 5))
+        _, axs = plt.subplots(1, 2, figsize=(20, 10), fontsize=14)
         axs[0].bar(score["t1"].keys(), score["t1"].values())
-        axs[1].bar(score["t8"].keys(), score["t8"].values())
+        axs[1].bar(score["t8"].keys(), score["t9"].values())
         axs[0].set_ylabel("Number of Wallets")
         axs[0].set_xlabel("Score range")
         axs[1].set_xlabel("Score range")
@@ -60,9 +44,7 @@ class HistogramDrawer:
         for wallet in wallets:
             start_lq_time = wallet['minTime']
             end_lq_time = wallet['maxTime']
-            score_start = dict(sorted(wallet[str(start_lq_time)].items(), key=lambda x: x[0]))
-            score_end = dict(sorted(wallet[str(end_lq_time)].items(), key=lambda x: x[0]))
-            score_start.update(score_end)
+
             list_time = [str(start_lq_time), str(end_lq_time),
                          str(int(end_lq_time) + 3600),
                          str(int(start_lq_time) - 3600)]
@@ -72,18 +54,24 @@ class HistogramDrawer:
                     str(int(end_lq_time) + 3600 * 24 * tmp)
                 ]
             list_time.sort()
-            keys = list(score_start.keys())
+            keys = list(wallet["scores"].keys())
             keys.sort()
             pos = 1
             for time_ in list_time:
                 if time_ not in keys:
-                    score[f"t{pos}"] = score[f"t{pos - 1}"]
+                    min_ = 850
+                    value = 0
+                    for key in keys:
+                        if abs(int(time_) - int(key)) < min_:
+                            value = wallet["scores"][key]["creditScore"]
+                            min_ = abs(int(time_) - int(key))
+                    self.check_value(value, score, pos)
                     continue
-                value = score_start[time_]["creditScore"]
+                value = wallet["scores"][time_]["creditScore"]
                 self.check_value(value, score, pos)
                 pos += 1
 
-        _, axs = plt.subplots(1, 3, figsize=(15, 5))
+        _, axs = plt.subplots(1, 3, figsize=(30, 10), fontsize=14)
         axs[0].bar(score["t1"].keys(), score["t1"].values())
         axs[1].bar(score["t8"].keys(), score["t8"].values())
         axs[2].bar(score["t9"].keys(), score["t9"].values())
@@ -126,8 +114,6 @@ class HistogramDrawer:
 
 if __name__ == "__main__":
     klg_mongo = MongoDB("mongodb://localhost:27017/", database="knowledge_graph")
-    with open('user.json', 'r') as f:
-        elite_wallets = json.loads(f.read())
     job = HistogramDrawer(klg_mongo)
     job.draw_histogram_one_time_liquidated_wallets()
-    # job.draw_histogram_multiple_times_liquidated_wallets()
+    job.draw_histogram_multiple_times_liquidated_wallets()

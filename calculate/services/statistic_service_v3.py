@@ -81,9 +81,19 @@ def get_median(array, _sorted=False):
 def get_value_with_timestamp(change_logs, timestamp, default=0):
     value = default
     for t, v in change_logs.items():
-        if t <= timestamp:
+        if int(timestamp) - 30*86400 < int(t) <= int(timestamp):
             value = v
     return value
+
+def get_list_value_with_timestamp(change_logs, timestamp, default=None):
+    if default is None:
+        default = []
+    value = default
+    for t, v in change_logs.items():
+        if int(timestamp) - 30*86400 < int(t) <= int(timestamp):
+            value += v
+    value = list(set(value))
+    return len(value)
 
 
 def get_logs_in_time(change_logs, start_time=0, end_time=int(time.time())):

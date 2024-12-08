@@ -145,6 +145,8 @@ def sort_log_without_null(change_logs: dict):
     for key in keys:
         if change_logs[key] is None:
             change_logs.pop(key)
+        if str(change_logs[key]).lower() == 'nan':
+            change_logs.pop(key)
     return change_logs
 
 
